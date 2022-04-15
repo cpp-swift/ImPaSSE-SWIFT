@@ -1,0 +1,20 @@
+[OPTIONS]
+checks_location = scoring_engine/checks
+target_round_time = 180
+worker_refresh_time = 30
+timezone = US/Eastern
+
+debug = False
+
+# SQLite
+db_uri = sqlite:////tmp/test_engine.db
+
+worker_num_concurrent_tasks = 4
+worker_queue = main
+
+# Set to null to disable caching
+cache_type = null
+
+redis_host = 127.0.0.1
+redis_port = 6379
+redis_password = testpass

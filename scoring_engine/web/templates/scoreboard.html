@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Scoreboard{% endblock %}
+{% block head %}
+{{ super() }}
+<script src="{{ url_for('static', filename='vendor/js/echarts.min.js') }}"></script>
+{% endblock %}
+{% block content %}
+<div class="container md-page">
+    <div id="teamBar" style="width: 100%; height:400px;"></div>
+    <hr>
+    <div id="teamLine" style="width: 100%; height:400px;"></div>
+    <script>
+        // Bar chart for all teams
+        var teamBarChart = echarts.init(document.getElementById('teamBar'));
+        teamBarChart.showLoading();
+
+        const barList = [];
+        $.get('/api/scoreboard/get_bar_data').done(function(data) {
+            echarts.util.each(data.scores, function(score, index) {
+                barList.push({
+                    value: score,
+                    itemStyle: {
+                        color: data.colors[index]
+                    }
+                });
+            });
+            teamBarChart.hideLoading();
+            teamBarChart.setOption({
+                tooltip: {
+                    trigger: 'axis'
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: [
+                    {
+                        type: 'category',
+                        data: data.labels,
+                    }
+                ],
+                yAxis: {
+                    type: 'value'
+                },
+                series: [
+                    {
+                    data: barList,
+                    type: 'bar'
+                    }
+                ]
+            });
+        });
+
+        // Update chart every 30 seconds
+        setInterval(function () {
+            const barList = [];
+            $.get('/api/scoreboard/get_bar_data').done(function(data) {
+                echarts.util.each(data.scores, function(score, index) {
+                    barList.push({
+                        value: score,
+                        itemStyle: {
+                            color: data.colors[index]
+                        }
+                    });
+                });
+                teamBarChart.setOption({
+                    series: [{
+                        data: barList,
+                    }]
+                });
+            });
+        }, 30000);
+    </script>
+    <script>
+        // Line chart for all teams
+        var teamLineChart = echarts.init(document.getElementById('teamLine'));
+        teamLineChart.showLoading();
+
+        const seriesList = [];
+        $.get('/api/scoreboard/get_line_data').done(function(data) {
+            echarts.util.each(data.team, function(team) {
+                seriesList.push({
+                    name: team.name,
+                    type: 'line',
+                    data: team.scores,
+                    itemStyle: {
+                        color: team.color
+                    }
+                });
+            });
+            teamLineChart.hideLoading();
+            teamLineChart.setOption({
+                tooltip: {
+                    trigger: 'axis'
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: data.rounds
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: seriesList,
+            });
+        });
+
+        // Update chart every 30 seconds
+        setInterval(function () {
+            const seriesList = [];
+            $.get('/api/scoreboard/get_line_data').done(function(data) {
+                echarts.util.each(data.team, function(team) {
+                    seriesList.push({
+                        name: team.name,
+                        type: 'line',
+                        data: team.scores,
+                    });
+                });
+                teamLineChart.setOption({
+                    series: seriesList,
+                });
+            });
+        }, 30000);
+    </script>
+</div>
+{% endblock %}

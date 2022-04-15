@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container md-page">
+  <div class="row">
+    <div class="col-sm-3 lefthand-nav" style="padding-top: 10px;">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <div class="panel-title">
+            <span>Stats <b class="pull-right glyphicon glyphicon-list-alt"></b></span>
+          </div>
+        </div>
+        <div class="list-group">
+          <a class="list-group-item {% if request.path == '/admin/status' %}active{% endif %}" href="/admin/status">Engine</a>
+          <a class="list-group-item {% if request.path == '/admin/workers' %}active{% endif %}" href="/admin/workers">Workers</a>
+          <a class="list-group-item {% if request.path == '/admin/queues' %}active{% endif %}" href="/admin/queues">Queues</a>
+        </div>
+      </div>
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <div class="panel-title">
+            <span>Settings <b class="pull-right glyphicon glyphicon-cog"></b></span>
+          </div>
+        </div>
+        <div class="list-group">
+          <a class="list-group-item {% if request.path == '/admin/settings' %}active{% endif %}" href="/admin/settings">Competition</a>
+        <a class="list-group-item {% if request.path == '/admin/permissions' %}active{% endif %}" href="/admin/permissions">Website Permissions</a>
+        <a class="list-group-item {% if request.path == '/admin/manage' %}active{% endif %}" href="/admin/manage">Users</a>
+        </div>
+      </div>
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <div class="panel-title">
+            <span>Teams <b class="pull-right glyphicon glyphicon-tasks"></b></span>
+          </div>
+        </div>
+        <div class="list-group">
+          {% for team in blue_teams %}
+            <a href="#" class="list-group-item" data-toggle="collapse" data-target="#services_team{{team.id}}">{{team.name}}</a>
+            <div id="services_team{{team.id}}" class="sublinks collapse {% if service and team.id == service.team.id %}in{% endif %}">
+            {% for service in team.services %}
+              <a href="/admin/service/{{service.id}}" class="list-group-item small {% if service and request.path == '/admin/service/{0}'.format(service.id) %}active{% endif %}"><span class="glyphicon glyphicon-chevron-right"></span> {{service.name}}</a>
+            {% endfor %}
+            {% for scs in team.scs %}
+	    <a href="/admin/scs/{{scs.id}}" class="list-group-item small {% if scs and request.path == '/admin/scs/{0}'.format(scs.id) %}active{% endif %}"><span class="glyphicon glyphicon-chevron-right"></span> {{scs.hostname}}-SCS{{scs.id}}</a>
+            {% endfor %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-9">
+      <div class="panel-body">
+        <div class="panel-group">
+          <div class="panel panel-default">
+            <div class="panel-heading" style="background-color:#f9f9f9">
+              <h2 class="panel-title">
+                {% block header %}{% endblock %}
+              </h2>
+            </div>
+            <div class="panel" style="border-top: 0.5px solid gray;">
+              <div class="panel-body" style="padding-top: 0px;">
+                {% block admincontent %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,143 @@
+---
+version: '3.7'
+services:
+  redis:
+    image: "redis:latest"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-h", "127.0.0.1", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 10
+    restart: on-failure
+    volumes:
+      - redis:/data
+    networks:
+      - default
+    # ports:
+    #   - 6379:6379
+  mysql:
+    image: mariadb:10
+    environment:
+      - MYSQL_ROOT_PASSWORD=CHANGEME
+      - MYSQL_DATABASE=scoring_engine
+      - MYSQL_USER=se_user
+      - MYSQL_PASSWORD=CHANGEME
+    restart: on-failure
+    volumes:
+      - mysql:/var/lib/mysql
+    networks:
+      - default
+    # ports:
+    #   - 3306:3306
+  nginx:
+    image: scoringengine/nginx
+    build:
+      context: .
+      dockerfile: ./docker/nginx/Dockerfile
+      cache_from:
+        - scoringengine/nginx
+        - nginx:latest
+    depends_on:
+      - web
+    ports:
+      - 80:80
+      - 443:443
+    healthcheck:
+      test: ["CMD", "curl", "-f", "localhost"]
+      interval: 30s
+      timeout: 3s
+      retries: 10
+    restart: on-failure
+    networks:
+      - default
+  base:
+    image: scoringengine/base
+    build:
+      context: .
+      dockerfile: ./docker/base/Dockerfile
+      cache_from:
+        - scoringengine/base
+        - base:latest
+  bootstrap:
+    image: scoringengine/bootstrap
+    build:
+      context: .
+      dockerfile: ./docker/bootstrap/Dockerfile
+      cache_from:
+        - scoringengine/bootstrap
+        - bootstrap:latest
+    depends_on:
+      - base
+      - mysql
+    healthcheck:
+      test: ["CMD", "exit", "1"]
+    restart: on-failure
+    networks:
+      - default
+    environment:
+      - SCORINGENGINE_EXAMPLE
+      - SCORINGENGINE_OVERWRITE_DB
+      - SCORINGENGINE_VERSION
+  engine:
+    image: scoringengine/engine
+    build:
+      context: .
+      dockerfile: ./docker/engine/Dockerfile
+      cache_from:
+        - scoringengine/engine
+        - engine:latest
+    depends_on:
+      - base
+      - redis
+      - bootstrap
+    restart: on-failure
+    networks:
+      - default
+    environment:
+      - SCORINGENGINE_EXAMPLE
+      - SCORINGENGINE_VERSION
+  worker:
+    image: scoringengine/worker
+    build:
+      context: .
+      dockerfile: ./docker/worker/Dockerfile
+      cache_from:
+        - scoringengine/worker
+        - worker:latest
+    depends_on:
+      - base
+      - redis
+    restart: unless-stopped
+    networks:
+      - default
+    environment:
+      - SCORINGENGINE_VERSION
+    privileged: true
+  web:
+    image: scoringengine/web
+    build:
+      context: .
+      dockerfile: ./docker/web/Dockerfile
+      cache_from:
+        - scoringengine/web
+        - web:latest
+    depends_on:
+      - base
+      - mysql
+    healthcheck:
+      test: ["CMD", "curl", "-f", "localhost:5000"]
+      interval: 30s
+      timeout: 3s
+      retries: 10
+    restart: on-failure
+    networks:
+      - default
+    environment:
+      - SCORINGENGINE_VERSION
+
+volumes:
+  redis:
+  mysql:
+
+networks:
+  default:

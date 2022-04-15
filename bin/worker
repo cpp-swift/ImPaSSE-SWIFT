@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+
+import os
+
+from scoring_engine.celery_app import celery_app
+from scoring_engine.config import config
+
+from scoring_engine.version import version
+from scoring_engine.logger import logger
+
+celery_log_level = "error"
+if config.debug is True:
+    celery_log_level = "info"
+
+workdir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../scoring_engine/engine')
+celery_args = [
+    'celery',
+    '--workdir={0}'.format(workdir),
+    '--loglevel={0}'.format(celery_log_level),
+    'worker',
+]
+
+if config.worker_num_concurrent_tasks != -1:
+    celery_args.append('--concurrency={0}'.format(config.worker_num_concurrent_tasks))
+
+celery_args.append('--queues={0}'.format(config.worker_queue))
+
+logger.info("Starting Worker v.{0} monitoring '{1}' queue".format(version, config.worker_queue))
+celery_app.start(argv=celery_args)
